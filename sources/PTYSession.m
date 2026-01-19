@@ -14495,6 +14495,24 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         dirty = YES;
     }
 
+    const BOOL wantsCommandChangeNotifications = [_delegate.realParentWindow autoCommandHistoryEnabledForSession:self];
+    if (_config.wantsCommandChangeNotifications != wantsCommandChangeNotifications) {
+        _config.wantsCommandChangeNotifications = wantsCommandChangeNotifications;
+        dirty = YES;
+    }
+
+    const BOOL osc52 = [self supportsOSC52];
+    if (_config.osc52 != osc52) {
+        _config.osc52 = osc52;
+        dirty = YES;
+    }
+
+    const BOOL sessionIsVisible = self.view.window != nil;
+    if (_config.sessionIsVisible != sessionIsVisible) {
+        _config.sessionIsVisible = sessionIsVisible;
+        dirty = YES;
+    }
+
     if (dirty) {
         _config.isDirty = dirty;
     }

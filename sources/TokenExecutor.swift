@@ -287,6 +287,17 @@ class TokenExecutor: NSObject {
     private var onExecutorQueue: Bool {
         return DispatchQueue.getSpecific(key: Self.isTokenExecutorSpecificKey) == true
     }
+    @objc var isBackgroundSession = false {
+        didSet {
+#if DEBUG
+            iTermGCD.assertMutationQueueSafe()
+#endif
+            if isBackgroundSession != oldValue {
+                impl.isBackgroundSession = isBackgroundSession
+            }
+        }
+    }
+
     @objc var isExecutingToken: Bool {
         #if DEBUG
         iTermGCD.assertMutationQueueSafe()
@@ -461,6 +472,25 @@ private class TokenExecutorImpl {
     private(set) var isExecutingToken = false
     weak var delegate: TokenExecutorDelegate?
 
+    // This is used to give visible sessions priority for token processing over those that cannot
+    // be seen. This prevents a very busy non-selected tab from starving a visible one.
+    private static var activeSessionsWithTokens = MutableAtomicObject<Set<ObjectIdentifier>>(Set())
+    @objc var isBackgroundSession = false {
+        didSet {
+#if DEBUG
+            iTermGCD.assertMutationQueueSafe()
+#endif
+            if isBackgroundSession != oldValue {
+                sideEffectScheduler.period = isBackgroundSession ? 1.0 : 1.0 / 30.0
+                if isBackgroundSession {
+                    Self.activeSessionsWithTokens.mutableAccess { set in
+                        set.remove(ObjectIdentifier(self))
+                    }
+                }
+            }
+        }
+    }
+
     init(_ terminal: VT100Terminal,
          slownessDetector: SlownessDetector,
          semaphore: DispatchSemaphore,
@@ -488,6 +518,12 @@ private class TokenExecutorImpl {
                     self.schedule()
                 }
             }
+        }
+    }
+
+    deinit {
+        Self.activeSessionsWithTokens.mutableAccess { set in
+            set.remove(ObjectIdentifier(self))
         }
     }
 
@@ -522,6 +558,14 @@ private class TokenExecutorImpl {
 #endif
         throughputEstimator.addByteCount(tokenArray.length)
         tokenQueue.addTokens(tokenArray, highPriority: highPriority)
+        if !isBackgroundSession {
+            Self.activeSessionsWithTokens.mutableAccess { set in
+                set.insert(ObjectIdentifier(self))
+            }
+        }
+    }
+
+    func didAddTokens() {
         execute()
     }
 
@@ -683,7 +727,13 @@ private class TokenExecutorImpl {
                                          accumulatedLength: &accumulatedLength,
                                          delegate: delegate)
                 }
-                if gDebugLogging.boolValue { DLog("Finished enumerating token arrays") }
+                if !isBackgroundSession && tokenQueue.isEmpty {
+                    DLog("Active session completely drained")
+                    Self.activeSessionsWithTokens.mutableAccess { set in
+                        set.remove(ObjectIdentifier(self))
+                    }
+                }
+                if gDebugLogging.boolValue { DLog("Finished enumerating token arrays. \(tokenQueue.isEmpty ? "There are no more tokens in the queue" : "The queue is not empty")") }
             }
         }
         if accumulatedLength > 0 || hadTokens {
@@ -703,6 +753,7 @@ private class TokenExecutorImpl {
         }
         var quitVectorEarly = false
         var vectorHasNext = true
+        let myObjectIdentifier = ObjectIdentifier(self)
         while !isPaused && !quitVectorEarly && vectorHasNext {
             if gDebugLogging.boolValue { DLog("continuing to next token") }
             if let token = vector.peek {
@@ -726,6 +777,12 @@ private class TokenExecutorImpl {
                     vectorHasNext = false
                 }
                 if gDebugLogging.boolValue { DLog("commit=\(commit) consume=\(consume) remaining=\(vector.numberRemaining)") }
+            }
+            if isBackgroundSession && !Self.activeSessionsWithTokens.value.isEmpty {
+                // Avoid blocking the active session. If there were multiple mutation threads this
+                // would be unnecessary.
+                DLog("Stop processing early because active session has tokens")
+                return false
             }
         }
         if quitVectorEarly {
@@ -841,7 +898,7 @@ class PeriodicScheduler: NSObject {
     private var _needsUpdate = false
     private let queue: DispatchQueue
     private let mutex = Mutex()
-    let period: TimeInterval
+    var period: TimeInterval
     private let action: () -> ()
     private var scheduledDeferred = false  // guarded by mutex
 

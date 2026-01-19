@@ -414,6 +414,7 @@ static _Atomic int gPerformingJoinedBlock;
     if ([dirty containsObject:@"desiredComposerRows"]) {
         [_promptStateMachine revealOrDismissComposerAgain];
     }
+    _tokenExecutor.isBackgroundSession = !config.sessionIsVisible;
 }
 
 - (void)movePromptUnderComposerIfNeeded {
