@@ -226,6 +226,10 @@ static _Atomic int gPerformingJoinedBlock;
     iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
     __weak __typeof(self) weakSelf = self;
     [_tokenExecutor addSideEffect:^{
+        if (!weakSelf) {
+            [unpauser unpause];
+            return;
+        }
         [weakSelf performPausedSideEffect:unpauser block:sideEffect];
     }];
 }
