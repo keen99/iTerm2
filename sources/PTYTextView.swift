@@ -649,6 +649,7 @@ extension PTYTextView {
     }
 }
 
+#if compiler(>=6.0)
 extension PTYTextView: NSViewContentSelectionInfo {
     func clampedRelativeCoord(_ absCoord: VT100GridAbsCoord) -> VT100GridCoord {
         var result = VT100GridCoordMake(0, 0)
@@ -719,3 +720,4 @@ extension PTYTextView: NSViewContentSelectionInfo {
         return .null
      }
 }
+#endif

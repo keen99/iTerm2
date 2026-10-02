@@ -82,7 +82,11 @@ static NSString *const kDynamicToolURL = @"URL";
     [iTermToolbeltView registerToolWithName:kCapturedOutputToolName withClass:[ToolCapturedOutputView class]];
     [iTermToolbeltView registerToolWithName:kCommandHistoryToolName withClass:[ToolCommandHistoryView class]];
     [iTermToolbeltView registerToolWithName:kNamedMarksToolName withClass:[ToolNamedMarks class]];
-    [iTermToolbeltView registerToolWithName:kRecentDirectoriesToolName withClass:[ToolDirectoriesView class]];
+    // LOCAL PATCH (keen99 fork): disabled Recent Directories tool. Its ToolDirectoriesView
+    // registers for directoriesDidChange and storms reloadData during session restore
+    // (96 windows x shell spawn flood). User never uses toolbelt. Re-enable by
+    // uncommenting. See iterm-freeze-autopsy/2026-10-01.
+    // [iTermToolbeltView registerToolWithName:kRecentDirectoriesToolName withClass:[ToolDirectoriesView class]];
     [iTermToolbeltView registerToolWithName:kJobsToolName withClass:[ToolJobs class]];
     [iTermToolbeltView registerToolWithName:kNotesToolName withClass:[ToolNotes class]];
     [iTermToolbeltView registerToolWithName:kPasteHistoryToolName withClass:[ToolPasteHistory class]];

@@ -74,7 +74,7 @@ extension NSTextView {
     }
 }
 
-extension NSTextView: @retroactive iTermPopupWindowHosting {
+extension NSTextView: iTermPopupWindowHosting {
     public func popupWindowHostingInsertionPointFrameInScreenCoordinates() -> NSRect {
         return cursorFrameInScreenCoordinates
     }

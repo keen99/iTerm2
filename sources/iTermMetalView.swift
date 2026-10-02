@@ -793,4 +793,4 @@ fileprivate func DisplayLinkCallback(displayLink: CVDisplayLink,
     return kCVReturnSuccess
 }
 
-extension CAMetalLayer: @unchecked @retroactive Sendable {}
+extension CAMetalLayer: @unchecked Sendable {}

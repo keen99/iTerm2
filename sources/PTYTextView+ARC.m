@@ -1428,6 +1428,7 @@ iTermCommandInfoViewControllerDelegate>
     return NO;
 }
 
+#if __MAC_OS_X_VERSION_MAX_ALLOWED >= 150000
 - (void)showContextMenuForSelection:(id)sender {
     if (@available(macOS 15, *)) {
         if ([self.delegate textViewWouldReportControlReturn]) {
@@ -1436,6 +1437,7 @@ iTermCommandInfoViewControllerDelegate>
         [super showContextMenuForSelection:sender];
     }
 }
+#endif
 
 #pragma mark - iTermContextMenuHelperDelegate
 

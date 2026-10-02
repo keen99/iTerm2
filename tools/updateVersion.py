@@ -1,21 +1,13 @@
-#!/Library/Frameworks/Python.framework/Versions/3.9/bin/python3
-# Get it from:
-# https://www.python.org/ftp/python/3.9.13/python-3.9.13-macos11.pkg
-# Install the package and then do
-# /Library/Frameworks/Python.framework/Versions/3.9/bin/pip3 install pyobjc
-
-# We can't use the python in $PATH because xcode ships with Python and we need one that has pybobjc.
+#!/usr/bin/env python3
+# Local build version: uses stdlib plistlib (no pyobjc dependency).
+# Original relied on /Library/Frameworks/Python 3.9 + pyobjc.
 
 import os
 import sys
 import time
 import subprocess
 
-try:
-    del os.environ["MACOSX_DEPLOYMENT_TARGET"]
-except KeyError:
-    pass
-from Foundation import NSMutableDictionary
+import plistlib
 
 if os.environ["CONFIGURATION"] == "Development":
     cmd = "git log -1 --format=\"%H\""
@@ -33,21 +25,22 @@ else:
     revision = time.strftime("%Y%m%d")
 version = open("version.txt").read().strip() % {"extra": revision}
 
+
 def update(path):
-    plist = NSMutableDictionary.dictionaryWithContentsOfFile_(path)
     print("Updating versions:", path, version)
-    if not plist:
-        print(f"WARNING - FAILED TO LOAD PLIST from {path}")
+    try:
+        with open(path, "rb") as f:
+            plist = plistlib.load(f)
+    except Exception as e:
+        print(f"WARNING - FAILED TO LOAD PLIST from {path}: {e}")
+        return
     plist["CFBundleShortVersionString"] = version
     plist["CFBundleGetInfoString"] = version
     plist["CFBundleVersion"] = version
-    plist.writeToFile_atomically_(path, 1)
-    print(plist)
+    with open(path, "wb") as f:
+        plistlib.dump(plist, f)
 
 
-# Update the main app's plist
-
-# /Users/gnachman/git/iterm2/Build/Development
 srcDir = os.environ["SRCROOT"]
 print(f"SRCROOT={srcDir}")
 
