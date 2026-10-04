@@ -282,7 +282,9 @@ class TokenExecutor: NSObject {
             impl.delegate = delegate
         }
     }
-    private let semaphore = DispatchSemaphore(value: 4)
+    // keen99 backport of f10fe8bfd queue-depth change: was hardcoded 4 (3.5.15).
+    // Deeper backpressure buffer = fewer producer stalls (freeze-adjacent). Default 40.
+    private let semaphore = DispatchSemaphore(value: Int(iTermAdvancedSettingsModel.bufferDepth()))
     private let impl: TokenExecutorImpl
     private let queue: DispatchQueue
     private static let isTokenExecutorSpecificKey = DispatchSpecificKey<Bool>()

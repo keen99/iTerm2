@@ -64,6 +64,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (NSString *)alternateMouseScrollStringForUp;
 + (BOOL)alwaysAcceptFirstMouse;
 + (int)alwaysWarnBeforePastingOverSize;
++ (int)bufferDepth;
 + (BOOL)anonymousTmuxWindowsOpenInCurrentWindow;
 + (BOOL)appendToExistingDebugLog;
 + (BOOL)autoLockSessionNameOnEdit;

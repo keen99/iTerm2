@@ -354,6 +354,7 @@ DEFINE_BOOL(useDoubleClickDelayForCommandSelection, NO, SECTION_MOUSE @"Wait to 
 #pragma mark Terminal
 
 #define SECTION_TERMINAL @"Terminal: "
+DEFINE_INT(bufferDepth, 40, SECTION_TERMINAL @"Maximum number of chunks to buffer.\nIn general, these chunks are 1024 bytes. A larger value increases buffer bloat but—up to a limit—can improve performance in the fast path of ASCII text.");
 
 DEFINE_BOOL(bounceOnInactiveBell, NO, SECTION_TERMINAL @"Bounce dock icon when the bell rings while another app is active?");
 DEFINE_BOOL(traditionalVisualBell, NO, SECTION_TERMINAL @"Visual bell flashes the whole screen, not just a bell icon.");
